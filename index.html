@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width,
+                   initial-scale=1.0,
+                   maximum-scale=1.0,
+                   user-scalable=no">
+
+    <title>Thief Escape 3D</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #111;
+            font-family: Arial, sans-serif;
+            touch-action: none;
+        }
+
+        #game {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #hud {
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            right: 14px;
+            z-index: 10;
+
+            display: flex;
+            justify-content: space-between;
+
+            pointer-events: none;
+        }
+
+        .hudBox {
+            color: white;
+
+            background: rgba(10, 14, 20, 0.82);
+
+            border: 1px solid rgba(255,255,255,0.25);
+
+            padding: 10px 15px;
+
+            border-radius: 14px;
+
+            font-weight: bold;
+            font-size: 17px;
+
+            box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+        }
+
+        #alert {
+            position: fixed;
+
+            top: 74px;
+            left: 50%;
+
+            transform: translateX(-50%);
+
+            z-index: 12;
+
+            color: white;
+
+            background: #c62828;
+
+            display: none;
+
+            padding: 8px 18px;
+
+            border-radius: 12px;
+
+            font-weight: bold;
+        }
+
+        /* Joystick */
+
+        #joystick {
+            position: fixed;
+
+            left: 24px;
+            bottom: 24px;
+
+            width: 135px;
+            height: 135px;
+
+            border-radius: 50%;
+
+            border: 3px solid rgba(255,255,255,0.4);
+
+            background: rgba(255,255,255,0.08);
+
+            z-index: 20;
+        }
+
+        #stick {
+            position: absolute;
+
+            left: 35px;
+            top: 35px;
+
+            width: 59px;
+            height: 59px;
+
+            border-radius: 50%;
+
+            background: rgba(255,255,255,0.55);
+
+            border: 2px solid white;
+        }
+
+        /* زر الجري */
+
+        #run {
+            position: fixed;
+
+            right: 28px;
+            bottom: 42px;
+
+            width: 96px;
+            height: 96px;
+
+            border-radius: 50%;
+
+            z-index: 20;
+
+            border: 4px solid white;
+
+            background: #f3f3f3;
+
+            color: #111;
+
+            font-weight: 900;
+
+            font-size: 18px;
+        }
+
+        #help {
+            position: fixed;
+
+            bottom: 8px;
+            left: 50%;
+
+            transform: translateX(-50%);
+
+            color: rgba(255,255,255,0.6);
+
+            font-size: 12px;
+
+            z-index: 11;
+
+            white-space: nowrap;
+
+            pointer-events: none;
+        }
+
+        /* شاشة البداية */
+
+        #menu {
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 30;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    rgba(0,0,0,0.55),
+                    rgba(0,0,0,0.8)
+                );
+        }
+
+        .card {
+            width: min(430px,90vw);
+
+            background: rgba(21,25,34,0.95);
+
+            color: white;
+
+            border: 1px solid rgba(255,255,255,0.18);
+
+            border-radius: 24px;
+
+            padding: 28px;
+
+            text-align: center;
+
+            box-shadow:
+                0 20px 70px rgba(0,0,0,0.8);
+        }
+
+        .card h1 {
+            font-size: 38px;
+
+            margin: 0 0 8px;
+        }
+
+        .card p {
+            color: #ccd2dc;
+
+            line-height: 1.6;
+        }
+
+        .card button {
+            padding: 14px 30px;
+
+            border: 0;
+
+            border-radius: 14px;
+
+            font-size: 19px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="game"></div>
+
+<!-- واجهة اللعبة -->
+
+<div id="hud">
+
+    <div class="hudBox">
+        LEVEL
+        <span id="level">1</span>
+    </div>
+
+    <div class="hudBox">
+        💎
+        <span id="gems">0</span>
+        /
+        <span id="maxGems">10</span>
+    </div>
+
+</div>
+
+<!-- تنبيه الشرطة -->
+
+<div id="alert">
+    ❗ الشرطة شافتك!
+</div>
+
+<!-- Joystick -->
+
+<div id="joystick">
+
+    <div id="stick"></div>
+
+</div>
+
+<!-- زر الجري -->
+
+<button id="run">
+    RUN
+</button>
+
+<div id="help">
+    WASD للتحكم • Shift للجري • اجمع الجواهر ثم المفتاح ثم اخرج من الباب
+</div>
+
+<!-- شاشة البداية والنهاية -->
+
+<div id="menu">
+
+    <div class="card">
+
+        <h1 id="menuTitle">
+            THIEF ESCAPE 3D
+        </h1>
+
+        <p id="menuText">
+            اهرب من الشرطة، اجمع الجواهر،
+            خذ المفتاح الذهبي، ثم اخرج من الباب.
+        </p>
+
+        <button id="start">
+            ابدأ اللعبة
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- Three.js -->
+
+<script type="module">
+
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
+
+
+/* =========================
+   إعداد اللعبة
+========================= */
+
+const game =
+document.getElementById("game");
+
+
+const scene =
+new THREE.Scene();
+
+
+scene.background =
+new THREE.Color(0x7d9bb2);
+
+
+scene.fog =
+new THREE.Fog(
+    0x7d9bb2,
+    35,
+    105
+);
+
+
+/* =========================
+   الكاميرا
+========================= */
+
+const camera =
+new THREE.PerspectiveCamera(
+    58,
+    innerWidth / innerHeight,
+    0.1,
+    180
+);
+
+
+/* =========================
+   Renderer
+========================= */
+
+const renderer =
+new THREE.WebGLRenderer({
+    antialias: true
+});
+
+
+renderer.setSize(
+    innerWidth,
+    innerHeight
+);
+
+
+renderer.setPixelRatio(
+    Math.min(devicePixelRatio, 2)
+);
+
+
+renderer.shadowMap.enabled = true;
+
+
+renderer.shadowMap.type =
+THREE.PCFSoftShadowMap;
+
+
+game.appendChild(
+    renderer.domElement
+);
+
+
+/* =========================
+   الإضاءة
+========================= */
+
+scene.add(
+    new THREE.HemisphereLight(
+        0xcfe5ff,
+        0x293021,
+        2
+    )
+);
+
+
+const sun =
+new THREE.DirectionalLight(
+    0xfff4dc,
+    3
+);
+
+
+sun.position.set(
+    -30,
+    45,
+    25
+);
+
+
+sun.castShadow = true;
+
+
+sun.shadow.mapSize.set(
+    2048,
+    2048
+);
+
+
+scene.add(sun);
+
+
+/* =========================
+   الخامات
+========================= */
+
+const mat = {
+
+    ground:
+        new THREE.MeshStandardMaterial({
+            color: 0x4b5d42,
+            roughness: 1
+        }),
+
+    road:
+        new THREE.MeshStandardMaterial({
+            color: 0x30343a,
+            roughness: .9
+        }),
+
+    sidewalk:
+        new THREE.MeshStandardMaterial({
+            color: 0x8c8e8c,
+            roughness: .9
+        }),
+
+    wall:
+        new THREE.MeshStandardMaterial({
+            color: 0xb9b5aa,
+            roughness: .8
+        }),
+
+    wall2:
+        new THREE.MeshStandardMaterial({
+            color: 0x68717b,
+            roughness: .8
+        }),
+
+    roof:
+        new THREE.MeshStandardMaterial({
+            color: 0x373b40,
+            roughness: .9
+        }),
+
+    wood:
+        new THREE.MeshStandardMaterial({
+            color: 0x704525,
+            roughness: .8
+        }),
+
+    metal:
+        new THREE.MeshStandardMaterial({
+            color: 0x687078,
+            metalness: .55,
+            roughness: .35
+        }),
+
+    glass:
+        new THREE.MeshStandardMaterial({
+            color: 0x79c6e8,
+            transparent: true,
+            opacity: .55
+        }),
+
+    thief:
+        new THREE.MeshStandardMaterial({
+            color: 0x24262c,
+            roughness: .65
+        }),
+
+    police:
+        new THREE.MeshStandardMaterial({
+            color: 0x173c72,
+            roughness: .65
+        }),
+
+    skin:
+        new THREE.MeshStandardMaterial({
+            color: 0xa96846,
+            roughness: .9
+        }),
+
+    gold:
+        new THREE.MeshStandardMaterial({
+            color: 0xffca28,
+            metalness: .75,
+            roughness: .2,
+            emissive: 0x5b3d00,
+            emissiveIntensity: .4
+        }),
+
+    gem:
+        new THREE.MeshStandardMaterial({
+            color: 0x29d9ff,
+            metalness: .45,
+            roughness: .15,
+            emissive: 0x006b88,
+            emissiveIntensity: 1.3
+        }),
+
+    white:
+        new THREE.MeshStandardMaterial({
+            color: 0xf5f7fa,
+            roughness: .35
+        })
+};
+
+
+/* =========================
+   قائمة الحواجز
+========================= */
+
+const obstacles = [];
+
+
+/* =========================
+   إنشاء Box
+========================= */
+
+function box(
+    name,
+    x,
+    y,
+    z,
+    w,
+    h,
+    d,
+    material,
+    collide = true
+) {
+
+    const mesh =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                w,
+                h,
+                d
+            ),
+            material
+        );
+
+    mesh.name = name;
+
+    mesh.position.set(
+        x,
+        y,
+        z
+    );
+
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    scene.add(mesh);
+
+
+    if (collide) {
+
+        obstacles.push({
+            x,
+            z,
+            w,
+            d
+        });
+
+    }
+
+    return mesh;
+}
+
+
+/* =========================
+   الخريطة
+========================= */
+
+
+/* الأرض */
+
+box(
+    "ground",
+    0,
+    -0.25,
+    0,
+    100,
+    .5,
+    100,
+    mat.ground,
+    false
+);
+
+
+/* الشوارع */
+
+box(
+    "road",
+    0,
+    .015,
+    4,
+    9,
+    .08,
+    90,
+    mat.road,
+    false
+);
+
+
+box(
+    "road",
+    -1,
+    .02,
+    0,
+    90,
+    .08,
+    9,
+    mat.road,
+    false
+);
+
+
+/* الأرصفة */
+
+box(
+    "sidewalk",
+    -6,
+    .08,
+    0,
+    2,
+    .16,
+    90,
+    mat.sidewalk,
+    false
+);
+
+
+box(
+    "sidewalk",
+    5.5,
+    .08,
+    0,
+    2,
+    .16,
+    90,
+    mat.sidewalk,
+    false
+);
+
+
+/* المباني */
+
+box(
+    "building",
+    -20,
+    3,
+    -19,
+    24,
+    6,
+    15,
+    mat.wall,
+    true
+);
+
+
+box(
+    "building",
+    20,
+    3,
+    -19,
+    24,
+    6,
+    15,
+    mat.wall2,
+    true
+);
+
+
+box(
+    "building",
+    -21,
+    3,
+    20,
+    22,
+    6,
+    15,
+    mat.wall2,
+    true
+);
+
+
+box(
+    "building",
+    21,
+    3,
+    20,
+    22,
+    6,
+    15,
+    mat.wall,
+    true
+);
+
+
+/* الأسطح */
+
+box(
+    "roof",
+    -20,
+    6.3,
+    -19,
+    25,
+    .6,
+    16,
+    mat.roof,
+    false
+);
+
+
+box(
+    "roof",
+    20,
+    6.3,
+    -19,
+    25,
+    .6,
+    16,
+    mat.roof,
+    false
+);
+
+
+box(
+    "roof",
+    -21,
+    6.3,
+    20,
+    23,
+    .6,
+    16,
+    mat.roof,
+    false
+);
+
+
+box(
+    "roof",
+    21,
+    6.3,
+    20,
+    23,
+    .6,
+    16,
+    mat.roof,
+    false
+);
+
+
+/* النوافذ */
+
+for (
+    const p of [
+        [-14, -27],
+        [-25, -27],
+        [14, -27],
+        [25, -27],
+        [-15, 12],
+        [-27, 12],
+        [15, 12],
+        [27, 12]
+    ]
+) {
+
+    box(
+        "window",
+        p[0],
+        1.8,
+        p[1],
+        3,
+        2.2,
+        .18,
+        mat.glass,
+        false
+    );
+
+}
+
+
+/* صناديق */
+
+for (
+    let i = 0;
+    i < 8;
+    i++
+) {
+
+    const x =
+        -2 + (i % 4) * 1.5;
+
+    const z =
+        12 + Math.floor(i / 4) * 2;
+
+    box(
+        "crate",
+        x,
+        .65,
+        z,
+        1.2,
+        1.3,
+        1.2,
+        mat.wood,
+        true
+    );
+
+}
+
+
+/* =========================
+   شخصية اللاعب
+========================= */
+
+function makeCharacter(type) {
+
+    const group =
+        new THREE.Group();
+
+
+    /* الجسم */
+
+    const torso =
+        new THREE.Mesh(
+            new THREE.CapsuleGeometry(
+                .48,
+                .95,
+                6,
+                12
+            ),
+            type === "thief"
+                ? mat.thief
+                : mat.police
+        );
+
+
+    torso.position.y = 1.15;
+
+    torso.castShadow = true;
+
+    group.add(torso);
+
+
+    /* الرأس */
+
+    const head =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .4,
+                20,
+                14
+            ),
+            mat.skin
+        );
+
+
+    head.position.y = 2.18;
+
+    head.castShadow = true;
+
+    group.add(head);
+
+
+    /* الأرجل */
+
+    for (
+        const x of [-.22,.22]
+    ) {
+
+        const leg =
+            new THREE.Mesh(
+                new THREE.CapsuleGeometry(
+                    .14,
+                    .72,
+                    5,
+                    8
+                ),
+                type === "thief"
+                    ? mat.thief
+                    : mat.police
+            );
+
+        leg.position.set(
+            x,
+            .48,
+            0
+        );
+
+        leg.castShadow = true;
+
+        group.add(leg);
+
+    }
+
+
+    /* الذراع */
+
+    for (
+        const x of [-.6,.6]
+    ) {
+
+        const arm =
+            new THREE.Mesh(
+                new THREE.CapsuleGeometry(
+                    .13,
+                    .75,
+                    5,
+                    8
+                ),
+                type === "thief"
+                    ? mat.thief
+                    : mat.police
+            );
+
+        arm.position.set(
+            x,
+            1.18,
+            0
+        );
+
+        group.add(arm);
+
+    }
+
+
+    /* القبعة */
+
+    const cap =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .43,
+                .43,
+                .16,
+                20
+            ),
+            type === "thief"
+                ? new THREE.MeshStandardMaterial({
+                    color: 0x111318
+                })
+                : new THREE.MeshStandardMaterial({
+                    color: 0x102d5a
+                })
+        );
+
+
+    cap.position.y = 2.55;
+
+    group.add(cap);
+
+
+    return group;
+}
+
+
+/* اللاعب */
+
+const player =
+    makeCharacter("thief");
+
+
+player.position.set(
+    0,
+    0,
+    35
+);
+
+
+scene.add(player);
+
+
+/* الشرطة */
+
+const cops = [];
+
+
+function addCop(x,z) {
+
+    const cop =
+        makeCharacter("police");
+
+
+    cop.position.set(
+        x,
+        0,
+        z
+    );
+
+
+    cop.userData = {
+
+        homeX: x,
+        homeZ: z,
+
+        state: "patrol",
+
+        phase: Math.random() * 6
+
+    };
+
+
+    scene.add(cop);
+
+    cops.push(cop);
+
+}
+
+
+addCop(-17,7);
+addCop(18,10);
+
+
+/* =========================
+   الجواهر
+========================= */
+
+const gems = [];
+
+
+const gemPositions = [
+
+    [-14,-4],
+    [-7,-6],
+    [7,-6],
+    [14,-4],
+
+    [-14,6],
+    [-8,12],
+    [0,10],
+    [8,12],
+    [14,6],
+
+    [0,22]
+
+];
+
+
+for (
+    const p of gemPositions
+) {
+
+    const gem =
+        new THREE.Mesh(
+            new THREE.OctahedronGeometry(.58),
+            mat.gem
+        );
+
+
+    gem.position.set(
+        p[0],
+        .9,
+        p[1]
+    );
+
+
+    gem.castShadow = true;
+
+    scene.add(gem);
+
+    gems.push(gem);
+
+}
+
+
+/* =========================
+   المفتاح
+========================= */
+
+const key =
+    new THREE.Mesh(
+        new THREE.TorusGeometry(
+            .48,
+            .13,
+            12,
+            24
+        ),
+        mat.gold
+    );
+
+
+key.position.set(
+    0,
+    .9,
+    -25
+);
+
+
+key.rotation.x =
+    Math.PI / 2;
+
+
+key.visible = false;
+
+scene.add(key);
+
+
+/* =========================
+   باب الخروج
+========================= */
+
+box(
+    "exitFrame",
+    0,
+    2,
+    -30,
+    5,
+    4,
+    .5,
+    mat.gold,
+    false
+);
+
+
+box(
+    "exitLight",
+    0,
+    2,
+    -30.28,
+    3.5,
+    3.4,
+    .12,
+    mat.white,
+    false
+);
+
+
+/* =========================
+   التحكم
+========================= */
+
+const input = {
+
+    x: 0,
+    y: 0,
+    run: false
+
+};
+
+
+const keys = {};
+
+
+addEventListener(
+    "keydown",
+    e => {
+
+        keys[
+            e.key.toLowerCase()
+        ] = true;
+
+        if (
+            e.key === "Shift"
+        ) {
+            input.run = true;
+        }
+
+    }
+);
+
+
+addEventListener(
+    "keyup",
+    e => {
+
+        keys[
+            e.key.toLowerCase()
+        ] = false;
+
+        if (
+            e.key === "Shift"
+        ) {
+            input.run = false;
+        }
+
+    }
+);
+
+
+/* Joystick */
+
+const joystick =
+    document.getElementById(
+        "joystick"
+    );
+
+
+const stick =
+    document.getElementById(
+        "stick"
+    );
+
+
+let dragging = false;
+
+
+function moveJoystick(e) {
+
+    const p =
+        e.touches
+            ? e.touches[0]
+            : e;
+
+
+    const rect =
+        joystick.getBoundingClientRect();
+
+
+    let x =
+        p.clientX -
+        (
+            rect.left +
+            rect.width / 2
+        );
+
+
+    let y =
+        p.clientY -
+        (
+            rect.top +
+            rect.height / 2
+        );
+
+
+    const max = 45;
+
+    const distance =
+        Math.hypot(x,y);
+
+
+    if (
+        distance > max
+    ) {
+
+        x =
+            x / distance * max;
+
+        y =
+            y / distance * max;
+
+    }
+
+
+    input.x = x / max;
+
+    input.y = y / max;
+
+
+    stick.style.transform =
+        `translate(${x}px,${y}px)`;
+
+}
+
+
+["touchstart","mousedown"]
+.forEach(
+    event => {
+
+        joystick.addEventListener(
+            event,
+            e => {
+
+                dragging = true;
+
+                moveJoystick(e);
+
+            }
+        );
+
+    }
+);
+
+
+["touchmove","mousemove"]
+.forEach(
+    event => {
+
+        addEventListener(
+            event,
+            e => {
+
+                if (
+                    dragging
+                ) {
+
+                    moveJoystick(e);
+
+                }
+
+            }
+        );
+
+    }
+);
+
+
+["touchend","mouseup"]
+.forEach(
+    event => {
+
+        addEventListener(
+            event,
+            () => {
+
+                dragging = false;
+
+                input.x = 0;
+
+                input.y = 0;
+
+                stick.style.transform =
+                    "";
+
+            }
+        );
+
+    }
+);
+
+
+/* زر الجري */
+
+const run =
+    document.getElementById(
+        "run"
+    );
+
+
+run.addEventListener(
+    "touchstart",
+    e => {
+
+        e.preventDefault();
+
+        input.run = true;
+
+    }
+);
+
+
+run.addEventListener(
+    "touchend",
+    () => {
+
+        input.run = false;
+
+    }
+);
+
+
+run.addEventListener(
+    "mousedown",
+    () => {
+
+        input.run = true;
+
+    }
+);
+
+
+run.addEventListener(
+    "mouseup",
+    () => {
+
+        input.run = false;
+
+    }
+);
+
+
+/* =========================
+   حالة اللعبة
+========================= */
+
+let collected = 0;
+
+let finished = false;
+
+
+/* الفوز والخسارة */
+
+function showResult(
+    title,
+    text
+) {
+
+    finished = true;
+
+    document.getElementById(
+        "menuTitle"
+    ).textContent = title;
+
+
+    document.getElementById(
+        "menuText"
+    ).textContent = text;
+
+
+    document.getElementById(
+        "start"
+    ).textContent =
+        "إعادة اللعب";
+
+
+    document.getElementById(
+        "menu"
+    ).classList.remove(
+        "hidden"
+    );
+
+}
+
+
+/* بداية اللعبة */
+
+document.getElementById(
+    "start"
+).onclick = () => {
+
+    if (
+        finished
+    ) {
+
+        location.reload();
+
+    } else {
+
+        document.getElementById(
+            "menu"
+        ).classList.add(
+            "hidden"
+        );
+
+    }
+
+};
+
+
+/* =========================
+   التصادم
+========================= */
+
+function blocked(
+    x,
+    z
+) {
+
+    for (
+        const obstacle of obstacles
+    ) {
+
+        if (
+
+            x >
+            obstacle.x -
+            obstacle.w / 2 -
+            .55
+
+            &&
+
+            x <
+            obstacle.x +
+            obstacle.w / 2 +
+            .55
+
+            &&
+
+            z >
+            obstacle.z -
+            obstacle.d / 2 -
+            .55
+
+            &&
+
+            z <
+            obstacle.z +
+            obstacle.d / 2 +
+            .55
+
+        ) {
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+}
+
+
+/* =========================
+   حركة اللاعب
+========================= */
+
+function updatePlayer(dt) {
+
+    let x =
+        (keys.d ? 1 : 0) -
+        (keys.a ? 1 : 0) +
+        input.x;
+
+
+    let z =
+        (keys.s ? 1 : 0) -
+        (keys.w ? 1 : 0) +
+        input.y;
+
+
+    const length =
+        Math.hypot(x,z);
+
+
+    if (
+        length > 1
+    ) {
+
+        x /= length;
+        z /= length;
+
+    }
+
+
+    if (
+        length < .05
+    ) {
+
+        return;
+
+    }
+
+
+    const speed =
+        (
+            input.run ||
+            keys.shift
+        )
+            ? 7
+            : 3.6;
+
+
+    const nx =
+        player.position.x +
+        x * speed * dt;
+
+
+    const nz =
+        player.position.z +
+        z * speed * dt;
+
+
+    if (
+        !blocked(
+            nx,
+            player.position.z
+        )
+    ) {
+
+        player.position.x = nx;
+
+    }
+
+
+    if (
+        !blocked(
+            player.position.x,
+            nz
+        )
+    ) {
+
+        player.position.z = nz;
+
+    }
+
+
+    player.rotation.y =
+        Math.atan2(
+            x,
+            z
+        );
+
+}
+
+
+/* =========================
+   جمع الجواهر
+========================= */
+
+function updateGems() {
+
+    gems.forEach(
+        gem => {
+
+            if (
+                !gem.visible
+            ) {
+
+                return;
+
+            }
+
+
+            gem.rotation.y += .025;
+
+
+            gem.position.y =
+                .9 +
+                Math.sin(
+                    Date.now() * .004
+                ) * .08;
+
+
+            if (
+                player.position.distanceTo(
+                    gem.position
+                ) < 1.5
+            ) {
+
+                gem.visible = false;
+
+                collected++;
+
+
+                document.getElementById(
+                    "gems"
+                ).textContent =
+                    collected;
+
+            }
+
+        }
+    );
+
+
+    if (
+        collected === gems.length
+    ) {
+
+        key.visible = true;
+
+    }
+
+
+    if (
+        key.visible
+    ) {
+
+        key.rotation.z += .035;
+
+
+        if (
+            player.position.distanceTo(
+                key.position
+            ) < 1.6
+        ) {
+
+            key.visible = false;
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   الشرطة
+========================= */
+
+function updatePolice(dt) {
+
+    let policeAlert = false;
+
+
+    cops.forEach(
+        cop => {
+
+            const dx =
+                player.position.x -
+                cop.position.x;
+
+
+            const dz =
+                player.position.z -
+                cop.position.z;
+
+
+            const distance =
+                Math.hypot(
+                    dx,
+                    dz
+                );
+
+
+            const sees =
+                distance < 10;
+
+
+            if (
+                sees
+            ) {
+
+                cop.userData.state =
+                    "chase";
+
+            }
+
+
+            if (
+                cop.userData.state ===
+                "chase"
+            ) {
+
+                policeAlert = true;
+
+
+                cop.rotation.y =
+                    Math.atan2(
+                        dx,
+                        dz
+                    );
+
+
+                const speed = 2.6;
+
+
+                const nx =
+                    cop.position.x +
+                    dx /
+                    Math.max(
+                        distance,
+                        .01
+                    ) *
+                    speed *
+                    dt;
+
+
+                const nz =
+                    cop.position.z +
+                    dz /
+                    Math.max(
+                        distance,
+                        .01
+                    ) *
+                    speed *
+                    dt;
+
+
+                if (
+                    !blocked(
+                        nx,
+                        cop.position.z
+                    )
+                ) {
+
+                    cop.position.x =
+                        nx;
+
+                }
+
+
+                if (
+                    !blocked(
+                        cop.position.x,
+                        nz
+                    )
+                ) {
+
+                    cop.position.z =
+                        nz;
+
+                }
+
+
+                if (
+                    distance < 1.35
+                ) {
+
+                    showResult(
+                        "YOU LOSE",
+                        "الشرطة أمسكت بالحرامي."
+                    );
+
+                }
+
+            }
+
+            else {
+
+                cop.userData.phase +=
+                    dt * .7;
+
+
+                cop.position.x =
+                    cop.userData.homeX +
+                    Math.sin(
+                        cop.userData.phase
+                    ) * 4;
+
+
+                cop.position.z =
+                    cop.userData.homeZ +
+                    Math.cos(
+                        cop.userData.phase
+                    ) * 4;
+
+            }
+
+        }
+    );
+
+
+    document.getElementById(
+        "alert"
+    ).style.display =
+        policeAlert
+            ? "block"
+            : "none";
+
+}
+
+
+/* =========================
+   الفوز
+========================= */
+
+function checkWin() {
+
+    if (
+
+        collected ===
+        gems.length
+
+        &&
+
+        !key.visible
+
+        &&
+
+        player.position.distanceTo(
+            new THREE.Vector3(
+                0,
+                2,
+                -30
+            )
+        ) < 3
+
+    ) {
+
+        showResult(
+            "YOU WON",
+            "ممتاز! جمعت كل الجواهر وأخذت المفتاح وخرجت."
+        );
+
+    }
+
+}
+
+
+/* =========================
+   الكاميرا
+========================= */
+
+const clock =
+    new THREE.Clock();
+
+
+function animate() {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    const dt =
+        Math.min(
+            clock.getDelta(),
+            .05
+        );
+
+
+    if (
+        !finished
+    ) {
+
+        updatePlayer(dt);
+
+        updateGems();
+
+        updatePolice(dt);
+
+        checkWin();
+
+    }
+
+
+    /* كاميرا خلف الحرامي */
+
+    const offset =
+        new THREE.Vector3(
+            0,
+            9,
+            12
+        );
+
+
+    offset.applyAxisAngle(
+        new THREE.Vector3(
+            0,
+            1,
+            0
+        ),
+        player.rotation.y
+    );
+
+
+    const desired =
+        player.position
+            .clone()
+            .add(offset);
+
+
+    camera.position.lerp(
+        desired,
+        .10
+    );
+
+
+    camera.lookAt(
+        player.position.x,
+        1.1,
+        player.position.z
+    );
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+animate();
+
+
+/* =========================
+   تغيير حجم الشاشة
+========================= */
+
+addEventListener(
+    "resize",
+    () => {
+
+        camera.aspect =
+            innerWidth /
+            innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+            innerWidth,
+            innerHeight
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
